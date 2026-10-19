@@ -2,43 +2,57 @@ pipeline {
     agent any
     
     environment {
-        
-        DOCKER_HUB_USER = 'niranjanhulamudde'
+        // Docker Configuration
+        DOCKER_HUB_USER = 'niranjanhulamudde' 
         IMAGE_NAME      = 'cloud-native-app'
-        DOCKER_CREDS    = 'docker-pass' 
+        DOCKER_CREDS    = 'docker-pass'
+        
+        AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+        AWS_DEFAULT_REGION    = 'us-east-1' 
     }
     
     stages {
         stage('Checkout Code') {
             steps {
-                
                 checkout scm
             }
         }
         
         stage('Build Docker Image') {
             steps {
-                echo 'Building Docker image...'
                 script {
-                    def commitHash = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:${commitHash} ."
+                    
+                    ENV_COMMIT_HASH = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:${ENV_COMMIT_HASH} ."
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ."
                 }
             }
         }
         
-        stage('Ship to Docker Hub') {
+        stage('Push to Docker Hub') {
             steps {
-                echo 'Logging into Docker Hub and pushing image...'
-                
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS}", usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh "echo ${PASS} | docker login -u ${USER} --password-stdin"
+                    sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:${ENV_COMMIT_HASH}"
+                    sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                }
+            }
+        }
+        
+        
+        stage('Terraform Apply Network') {
+            steps {
+                dir('terraform') { 
+                    echo 'Initializing Terraform...'
+                    sh 'terraform init'
                     
-                    script {
-                        def commitHash = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                        sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:${commitHash}"
-                        sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
-                    }
+                    echo 'Planning infrastructure changes...'
+                    sh 'terraform plan'
+                    
+                    echo 'Applying infrastructure updates...'
+                    
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
@@ -46,9 +60,8 @@ pipeline {
     
     post {
         always {
-            echo 'Cleaning up local pipeline build images to save disk space...'
+            echo 'Cleaning up environment...'
             sh "docker logout"
         }
     }
 }
-
