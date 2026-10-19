@@ -1,0 +1,31 @@
+# === Terraform Ignored Files ===
+# Local directories containing downloaded plugins and modules
+.terraform/
+.terraform.lock.hcl
+
+# State history files (Contains plain-text cloud variables and infrastructure maps)
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+
+# Crash logs
+crash.log
+
+# === Jenkins & Local Runtime Ignored Files ===
+# Local data directory mounted for Jenkins (Contains config, logs, and secrets)
+jenkins_data/
+
+# Local database storage directory from Docker Compose
+pgdata/
+
+# === Python Ignored Files ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv
+env/
+venv/
+
