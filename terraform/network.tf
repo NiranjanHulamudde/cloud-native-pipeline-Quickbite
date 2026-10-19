@@ -9,7 +9,7 @@ resource "aws_vpc" "main" {
   enable_dns_support = true
 
   tags = {
-    Name = ${var.project_name}-vpc
+    Name = "${var.project_name}-vpc"
 }
 }
 
@@ -17,20 +17,20 @@ resource "aws_vpc" "main" {
 
 resource "aws_subnet" "public" {
   count = length(var.public_subnet_cidrs)
-  vpc_id = var.aws_vpc.main.id
+  vpc_id = aws_vpc.main.id
   cidr_block = var.public_subnet_cidrs[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.project_name}-public_subnet-${count.inedx + 1}"
+    Name = "${var.project_name}-public_subnet-${count.index + 1}"
 }
 }
 
 resource "aws_subnet" "private" {
   count = length(var.private_subnet_cidrs)
-  vpc_id = var.aws_vpc.main.id
-  cidrs_block = var.private_subnet_cidrs[count.index]
+  vpc_id = aws_vpc.main.id
+  cidr_block = var.private_subnet_cidrs[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
   tags = {
     Name = "${var.project_name}-private-subnet-${count.index + 1}"
@@ -44,8 +44,15 @@ resource "aws_internet_gateway" "igw" {
   tags = {
     Name = "${var.project_name}-igw"
 }
-
+}
 # elastic ip for NAT gateway
+resource "aws_eip" "nat" {
+	domain = "vpc"
+	tags = {
+    Name = "${var.project_name}-nat-eip"
+  }
+}
+
 
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
