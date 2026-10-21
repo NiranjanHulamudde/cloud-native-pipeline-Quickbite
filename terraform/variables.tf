@@ -29,3 +29,9 @@ variable "private_subnet_cidrs" {
 }
 
 
+variable "docker_hub_username" {
+  type        = string
+  default     = "niranjanhulamudde" 
+  description = "Docker Hub user namespace descriptor identifier mapping"
+}
+

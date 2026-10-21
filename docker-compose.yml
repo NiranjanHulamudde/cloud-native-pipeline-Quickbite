@@ -1,37 +1,50 @@
 version: '3.8'
 
 services:
-  web:
+  backend:
     build:
-      context: .
+      context: ./Backend
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "4000:4000" 
     environment:
-      - DB_USER=postgres
-      - DB_PASSWORD=secretpassword
-      - DB_HOST=db
-      - DB_NAME=todo_db
+      - JWT_SECRET=devops_portfolio_secret_key
+      - STRIPE_SECRET_KEY=sample_stripe_key_placeholder
+      - MONGO_URI=mongodb://db:27017/quickbite
     depends_on:
       db:
         condition: service_healthy
 
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=secretpassword
-      - POSTGRES_DB=todo_db
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
     ports:
-      - "5432:5432"
+      - "3000:80" 
+    depends_on:
+      - backend
+
+  admin:
+    build:
+      context: ./Admin
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+
+  db:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mongodata:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d todo_db"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
-  pgdata:
+  mongodata:
 
