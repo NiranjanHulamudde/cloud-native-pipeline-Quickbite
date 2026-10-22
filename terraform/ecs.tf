@@ -3,13 +3,13 @@ resource "aws_ecs_cluster" "main" {
 
   setting {
     name  = "containerInsights"
-    value = "enabled" 
+    value = "enabled"
   }
 }
 
 resource "aws_cloudwatch_log_group" "ecs_logs" {
   name              = "/ecs/${var.project_name}-app"
-  retention_in_days = 7 
+  retention_in_days = 7
 }
 
 resource "aws_iam_role" "ecs_execution_role" {
@@ -21,7 +21,7 @@ resource "aws_iam_role" "ecs_execution_role" {
       {
         Action    = "sts:AssumeRole"
         Effect    = "Allow"
-        Principal = { Service = "://amazonaws.com" }
+        Principal = { Service = "ecs-tasks.amazonaws.com" }
       }
     ]
   })
@@ -34,22 +34,22 @@ resource "aws_iam_role_policy_attachment" "ecs_execution" {
 
 resource "aws_ecs_task_definition" "app" {
   family                   = "${var.project_name}-task"
-  network_mode             = "awsvpc" 
+  network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256" 
+  cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
 
   container_definitions = jsonencode([
     {
-      name      = "flask-todo-app"
-      image     = "docker.io/${var.docker_hub_username}/cloud-native-app:latest" 
+      name      = "quickbite-app"
+      image     = "docker.io/${var.docker_hub_username}/quickbite-frontend:latest"
       essential = true
-      
+
       portMappings = [
         {
-          containerPort = 5000
-          hostPort      = 5000
+          containerPort = 80
+          hostPort      = 80
           protocol      = "tcp"
         }
       ]
@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "app" {
         { name = "DB_USER", value = "postgres" },
         { name = "DB_PASSWORD", value = "secretpassword" },
         { name = "DB_NAME", value = "todo_db" },
-        { name = "DB_HOST", value = "db" } 
+        { name = "DB_HOST", value = "db" }
       ]
 
       logConfiguration = {
@@ -78,7 +78,7 @@ resource "aws_ecs_service" "main" {
   name            = "${var.project_name}-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.app.arn
-  desired_count   = 1 
+  desired_count   = 1
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -89,8 +89,8 @@ resource "aws_ecs_service" "main" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.app.arn
-    container_name   = "flask-todo-app"
-    container_port   = 5000
+    container_name   = "frontend"
+    container_port   = 80
   }
 
   depends_on = [aws_lb_listener.http]
