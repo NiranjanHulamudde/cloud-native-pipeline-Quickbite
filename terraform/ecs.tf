@@ -80,6 +80,10 @@ resource "aws_ecs_service" "backend" {
     container_name   = "quickbite-backend"
     container_port   = 4000
   }
+  depends_on = [
+    aws_lb_listener.http,
+    aws_lb_listener_rule.backend_routing
+  ]
 }
 
 # Frontend apu
@@ -126,6 +130,9 @@ resource "aws_ecs_service" "frontend" {
     container_name   = "quickbite-frontend"
     container_port   = 80
   }
+  depends_on = [
+    aws_lb_listener.http
+  ]
 }
 
 # Admin 
@@ -172,4 +179,8 @@ resource "aws_ecs_service" "admin" {
     container_name   = "quickbite-admin"
     container_port   = 80
   }
+  depends_on = [
+    aws_lb_listener.http,
+    aws_lb_listener_rule.admin_routing
+  ]
 }
