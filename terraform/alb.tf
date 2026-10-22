@@ -51,7 +51,7 @@ resource "aws_lb_target_group" "backend" {
   target_type = "ip"
 
   health_check {
-    path                = "/api/food/list" # Uses standard QuickBite menu load endpoint to confirm backend liveness
+    path                = "/api/food/list"
     port                = "4000"
     interval            = 30
     timeout             = 5
@@ -66,7 +66,6 @@ resource "aws_lb_listener" "http" {
   port              = "80"
   protocol          = "HTTP"
 
- 
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.frontend.arn
@@ -86,6 +85,23 @@ resource "aws_lb_listener_rule" "backend_routing" {
   condition {
     path_pattern {
       values = ["/api/*", "/images/*"]
+    }
+  }
+}
+
+
+resource "aws_lb_listener_rule" "admin_routing" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 20
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.admin.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/admin", "/admin/*"]
     }
   }
 }
