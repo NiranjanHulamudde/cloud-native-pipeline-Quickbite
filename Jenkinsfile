@@ -23,7 +23,6 @@ pipeline {
             steps {
                 script {
                     
-                    ENV_COMMIT_HASH = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:${ENV_COMMIT_HASH} ."
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ."
                 }
