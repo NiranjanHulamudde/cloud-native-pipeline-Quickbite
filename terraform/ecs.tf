@@ -49,7 +49,7 @@ resource "aws_ecs_task_definition" "backend" {
       environment = [
         { name = "JWT_SECRET", value = "portfolio_secret_key" },
         { name = "STRIPE_SECRET_KEY", value = "sample_stripe_key" },
-        { name = "MONGO_URI", value = "mongodb://db.quickbite.local:27017/quickbite" }
+        { name = "MONGODB_URL", value = var.mongodb_url }
       ]
       logConfiguration = {
         logDriver = "awslogs"
