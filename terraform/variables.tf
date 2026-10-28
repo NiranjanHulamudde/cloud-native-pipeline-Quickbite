@@ -35,3 +35,7 @@ variable "docker_hub_username" {
   description = "Docker Hub user namespace descriptor identifier mapping"
 }
 
+variable "mongodb_url" {
+  type = string
+  sensitive = true
+}
