@@ -2,6 +2,7 @@
 # Local directories containing downloaded plugins and modules
 .terraform/
 .terraform.lock.hcl
+terraform.tfvars
 
 # State history files (Contains plain-text cloud variables and infrastructure maps)
 *.tfstate
