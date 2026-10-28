@@ -73,7 +73,7 @@ pipeline {
                     sh 'terraform plan'
                     
                     echo 'Executing AWS live updates layer apply...'
-                    sh 'terraform apply -auto-approve'
+                    sh "terraform apply -var='env_commit_hash=${ENV_COMMIT_HASH}' -auto-approve"
                 }
             }
         }
