@@ -177,7 +177,7 @@ resource "aws_ecs_service" "admin" {
   network_configuration {
     subnets         = aws_subnet.private[*].id
     security_groups = [aws_security_group.app_sg.id]
-    # FIX: Explicitly disabled to allow outbound passage via NAT Gateway
+   
     assign_public_ip = false
   }
 
