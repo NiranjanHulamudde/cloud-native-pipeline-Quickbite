@@ -2,12 +2,10 @@ resource "aws_ecs_cluster" "main" {
   name = "${var.project_name}-cluster"
 }
 
-
 resource "aws_cloudwatch_log_group" "ecs_logs" {
   name              = "/ecs/${var.project_name}"
   retention_in_days = 3
 }
-
 
 resource "aws_iam_role" "ecs_execution_role" {
   name = "${var.project_name}-ecs-execution-role-unique"
@@ -31,7 +29,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Backend api
+# Backend API Task Definition
 resource "aws_ecs_task_definition" "backend" {
   family                   = "${var.project_name}-backend-task"
   network_mode             = "awsvpc"
@@ -43,7 +41,8 @@ resource "aws_ecs_task_definition" "backend" {
   container_definitions = jsonencode([
     {
       name      = "quickbite-backend"
-      image     = "docker.io/niranjanhulamudde/quickbite-backend:latest"
+      
+      image     = "docker.io/niranjanhulamudde/quickbite-backend:${var.env_commit_hash}"
       essential = true
       portMappings = [{ containerPort = 4000, hostPort = 4000, protocol = "tcp" }]
       environment = [
@@ -73,6 +72,8 @@ resource "aws_ecs_service" "backend" {
   network_configuration {
     subnets         = aws_subnet.private[*].id
     security_groups = [aws_security_group.app_sg.id]
+   
+    assign_public_ip = false 
   }
 
   load_balancer {
@@ -86,7 +87,7 @@ resource "aws_ecs_service" "backend" {
   ]
 }
 
-# Frontend apu
+# Frontend UI Task Definition
 resource "aws_ecs_task_definition" "frontend" {
   family                   = "${var.project_name}-frontend-task"
   network_mode             = "awsvpc"
@@ -98,7 +99,8 @@ resource "aws_ecs_task_definition" "frontend" {
   container_definitions = jsonencode([
     {
       name      = "quickbite-frontend"
-      image     = "docker.io/niranjanhulamudde/quickbite-frontend:latest"
+     
+      image     = "docker.io/niranjanhulamudde/quickbite-frontend:${var.env_commit_hash}"
       essential = true
       portMappings = [{ containerPort = 80, hostPort = 80, protocol = "tcp" }]
       logConfiguration = {
@@ -123,6 +125,8 @@ resource "aws_ecs_service" "frontend" {
   network_configuration {
     subnets         = aws_subnet.private[*].id
     security_groups = [aws_security_group.app_sg.id]
+   
+    assign_public_ip = false
   }
 
   load_balancer {
@@ -135,7 +139,7 @@ resource "aws_ecs_service" "frontend" {
   ]
 }
 
-# Admin 
+
 resource "aws_ecs_task_definition" "admin" {
   family                   = "${var.project_name}-admin-task"
   network_mode             = "awsvpc"
@@ -147,7 +151,8 @@ resource "aws_ecs_task_definition" "admin" {
   container_definitions = jsonencode([
     {
       name      = "quickbite-admin"
-      image     = "docker.io/niranjanhulamudde/quickbite-admin:latest"
+      
+      image     = "docker.io/niranjanhulamudde/quickbite-admin:${var.env_commit_hash}"
       essential = true
       portMappings = [{ containerPort = 80, hostPort = 80, protocol = "tcp" }]
       logConfiguration = {
@@ -172,6 +177,8 @@ resource "aws_ecs_service" "admin" {
   network_configuration {
     subnets         = aws_subnet.private[*].id
     security_groups = [aws_security_group.app_sg.id]
+    # FIX: Explicitly disabled to allow outbound passage via NAT Gateway
+    assign_public_ip = false
   }
 
   load_balancer {
